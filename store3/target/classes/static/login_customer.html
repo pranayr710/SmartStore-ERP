@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customer Login - SmartStore 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .bg-grid {
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(148,163,184,0.2) 1px, transparent 0);
+      background-size: 28px 28px;
+    }
+    .glass {
+      background: rgba(15,23,42,0.92);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(148,163,184,0.45);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-50">
+  <div class="min-h-screen bg-grid relative overflow-hidden">
+    <div class="pointer-events-none absolute -top-24 -left-10 h-72 w-72 rounded-full bg-emerald-500/25 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-sky-500/20 blur-3xl"></div>
+
+    <div class="relative z-10 flex min-h-screen items-center justify-center px-4">
+      <div class="grid w-full max-w-5xl grid-cols-1 lg:grid-cols-[0.95fr,1.05fr] gap-6">
+        <!-- Left info / branding -->
+        <div class="hidden lg:flex flex-col justify-between rounded-3xl glass p-8">
+          <div>
+            <div class="inline-flex items-center gap-2 rounded-full bg-slate-800/80 px-3 py-1 text-xs text-emerald-300 mb-5">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Customer Experience
+            </div>
+            <h1 class="text-3xl font-extrabold tracking-tight mb-3">
+              Welcome to <span class="text-emerald-400">SmartStore 360</span>
+            </h1>
+            <p class="text-slate-300 text-sm leading-relaxed">
+              Sign in to explore curated smartphones, compare specs side by side,
+              and track your orders in a clean, modern interface.
+            </p>
+          </div>
+          <div class="mt-6 space-y-3 text-xs">
+            <div class="flex items-center gap-3">
+              <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/20 text-sky-300 text-sm">1</span>
+              <div>
+                <p class="font-semibold text-slate-100">Browse smart recommendations</p>
+                <p class="text-slate-500">See devices that match your usage and budget.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 text-sm">2</span>
+              <div>
+                <p class="font-semibold text-slate-100">Compare phones visually</p>
+                <p class="text-slate-500">Side-by-side comparison of specs and pricing.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right login card -->
+        <div class="glass rounded-3xl p-7 lg:p-8 shadow-2xl">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-400 mb-1">
+                SmartStore 360
+              </p>
+              <h2 class="text-xl font-semibold">Customer Login</h2>
+            </div>
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-300">
+              📱
+            </span>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label for="username" class="block text-xs font-medium text-slate-300 mb-1.5">
+                Username
+              </label>
+              <input
+                id="username"
+                placeholder="Enter your username"
+                class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+              >
+            </div>
+
+            <div>
+              <label for="password" class="block text-xs font-medium text-slate-300 mb-1.5">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+                class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+              >
+            </div>
+
+            <p id="msg" class="text-xs text-rose-400 h-4"></p>
+
+            <button
+              onclick="login()"
+              class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-emerald-400 to-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-400/30 hover:shadow-sky-500/40 hover:translate-y-[1px] transition"
+            >
+              Sign in as Customer
+            </button>
+
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-3">
+              <button
+                onclick="location.href='index.html'"
+                class="inline-flex items-center gap-1 text-slate-400 hover:text-slate-200 hover:underline"
+              >
+                ← Back to role selection
+              </button>
+              <button
+                onclick="location.href='signup.html'"
+                class="text-emerald-300 hover:text-emerald-200 hover:underline"
+              >
+                New here? Create account
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS logic preserved exactly -->
+  <script>
+    async function login() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      const data = await res.json();
+      if (data.status === 'OK') {
+        sessionStorage.setItem('role', data.role);
+        sessionStorage.setItem('userId', data.userId);
+        if ('CUSTOMER' === 'ADMIN' && data.role === 'ADMIN') window.location.href = 'dashboard_admin.html';
+        else if ('CUSTOMER' === 'STAFF' && data.role === 'STAFF') window.location.href = 'dashboard_staff.html';
+        else if ('CUSTOMER' === 'CUSTOMER' && data.role === 'CUSTOMER') window.location.href = 'dashboard_customer.html';
+        else document.getElementById('msg').innerText = 'You are not allowed to login as CUSTOMER';
+      } else {
+        document.getElementById('msg').innerText = 'Invalid credentials';
+      }
+    }
+  </script>
+</body>
+</html>

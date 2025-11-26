@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customer Dashboard - SmartStore 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+    .bg-grid {
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(148,163,184,0.18) 1px, transparent 0);
+      background-size: 30px 30px;
+    }
+    .glass {
+      background: rgba(15,23,42,0.9);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(148,163,184,0.35);
+    }
+  </style>
+
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-50">
+  <div class="min-h-screen bg-grid relative overflow-hidden">
+    <div class="pointer-events-none absolute -top-32 left-0 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-[-120px] right-[-80px] h-96 w-96 rounded-full bg-sky-500/20 blur-3xl"></div>
+
+    <div class="relative z-10 flex min-h-screen">
+      <aside class="hidden md:flex md:w-64 flex-col glass border-r border-slate-800/80 p-5">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300 text-xl">
+            📱
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500">SmartStore</p>
+            <h2 class="text-sm font-semibold">Customer</h2>
+          </div>
+        </div>
+
+        <nav class="space-y-1 text-sm">
+          <button
+            class="w-full text-left px-3 py-2 rounded-xl bg-slate-900/80 text-emerald-300 font-medium hover:bg-slate-800 flex items-center gap-2"
+            onclick="showSection('browse')"
+          >
+            <span>🛒</span>
+            <span>Browse Phones</span>
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 flex items-center gap-2"
+            onclick="showSection('compare')"
+          >
+            <span>⚖</span>
+            <span>Compare</span>
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 flex items-center gap-2"
+            onclick="showSection('recommend')"
+          >
+            <span>✨</span>
+            <span>Get Recommendation</span>
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 flex items-center gap-2"
+            onclick="showSection('orders')"
+          >
+            <span>📦</span>
+            <span>My Orders</span>
+          </button>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-slate-800/70">
+          <button
+            class="w-full text-left text-sm text-rose-400 hover:text-rose-300 flex items-center gap-2"
+            onclick="logout()"
+          >
+            <span>⏏</span>
+            <span>Logout</span>
+          </button>
+          <p class="mt-3 text-[11px] text-slate-500">
+            Signed in as <span class="text-emerald-300 font-medium">Customer</span>
+          </p>
+        </div>
+      </aside>
+
+      <main class="flex-1 flex flex-col">
+        <header class="glass border-b border-slate-800/80 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+          <div>
+            <h1 class="text-lg sm:text-xl font-semibold flex items-center gap-2">
+              Welcome back
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            </h1>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Browse phones, compare options, get smart suggestions, and track your orders.
+            </p>
+          </div>
+          <div class="hidden sm:flex items-center gap-2 text-[11px] text-slate-400">
+            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/25 text-emerald-100">
+              CU
+            </span>
+            <span>SmartStore Customer</span>
+          </div>
+        </header>
+
+        <!-- keep all your existing sections (browse, compare, recommend, orders, etc.) exactly as they are below this -->
+
+      <section id="section-browse">
+        <h2 class="text-xl font-semibold mb-4">Available Smartphones</h2>
+        <div id="products-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+      <section id="section-compare" class="hidden">
+        <h2 class="text-xl font-semibold mb-4">Compare Selected</h2>
+        <p class="text-sm text-slate-300 mb-2">Select up to 3 phones from browse section and click "Add to Compare". You can remove them here.</p>
+        <table class="min-w-full bg-slate-800 rounded-lg overflow-hidden text-sm">
+          <thead class="bg-slate-700">
+          <tr>
+            <th class="px-3 py-2">Name</th>
+            <th class="px-3 py-2">Brand</th>
+            <th class="px-3 py-2">Price</th>
+            <th class="px-3 py-2">Battery</th>
+            <th class="px-3 py-2">Camera</th>
+            <th class="px-3 py-2">Storage</th>
+            <th class="px-3 py-2">Action</th>
+          </tr>
+          </thead>
+          <tbody id="compare-body"></tbody>
+        </table>
+      </section>
+
+      <section id="section-recommend" class="hidden">
+        <h2 class="text-xl font-semibold mb-4">Find Best Phone For You</h2>
+        <div class="grid md:grid-cols-2 gap-3 text-sm max-w-xl">
+          <input id="r-budget" type="number" placeholder="Budget (₹)" class="px-3 py-2 rounded bg-slate-800 border border-slate-600">
+          <input id="r-brand" placeholder="Preferred brand (optional)" class="px-3 py-2 rounded bg-slate-800 border border-slate-600">
+          <input id="r-battery" type="number" placeholder="Min battery (mAh)" class="px-3 py-2 rounded bg-slate-800 border border-slate-600">
+          <input id="r-storage" type="number" placeholder="Min storage (GB)" class="px-3 py-2 rounded bg-slate-800 border border-slate-600">
+          <input id="r-camera" placeholder="Camera keyword (e.g. 64)" class="px-3 py-2 rounded bg-slate-800 border border-slate-600">
+        </div>
+        <button onclick="getRecommendation()" class="mt-4 bg-emerald-500 hover:bg-emerald-600 text-black px-4 py-2 rounded-lg">Recommend</button>
+        <div id="rec-result" class="mt-4 text-sm"></div>
+      </section>
+
+      <section id="section-orders" class="hidden">
+        <h2 class="text-xl font-semibold mb-4">My Orders</h2>
+        <table class="min-w-full bg-slate-800 rounded-lg overflow-hidden text-sm">
+          <thead class="bg-slate-700">
+          <tr>
+            <th class="px-3 py-2">Order ID</th>
+            <th class="px-3 py-2">Product</th>
+            <th class="px-3 py-2">Qty</th>
+            <th class="px-3 py-2">Total</th>
+            <th class="px-3 py-2">Date</th>
+          </tr>
+          </thead>
+          <tbody id="orders-body"></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    if (sessionStorage.getItem('role') !== 'CUSTOMER') window.location.href = 'index.html';
+    const userId = parseInt(sessionStorage.getItem('userId') || '0');
+    const compareList = [];
+
+    function showSection(id) {
+      document.getElementById('section-browse').classList.add('hidden');
+      document.getElementById('section-compare').classList.add('hidden');
+      document.getElementById('section-recommend').classList.add('hidden');
+      document.getElementById('section-orders').classList.add('hidden');
+      if (id === 'browse') document.getElementById('section-browse').classList.remove('hidden');
+      if (id === 'compare') document.getElementById('section-compare').classList.remove('hidden');
+      if (id === 'recommend') document.getElementById('section-recommend').classList.remove('hidden');
+      if (id === 'orders') { document.getElementById('section-orders').classList.remove('hidden'); loadOrders(); }
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      window.location.href = 'index.html';
+    }
+
+    async function loadProducts() {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      const grid = document.getElementById('products-grid');
+      grid.innerHTML = '';
+      data.forEach(p => {
+        const battery = p.battery != null ? p.battery + ' mAh' : '-';
+        const camera = p.camera || '-';
+        const storage = p.storage != null ? p.storage + ' GB' : '-';
+        const card = document.createElement('div');
+        card.className = 'bg-slate-800 rounded-xl p-4 flex flex-col justify-between';
+        card.innerHTML = `
+          <div>
+            <h3 class="font-semibold">${p.name}</h3>
+            <p class="text-xs text-slate-300">${p.brand} • ${p.category}</p>
+            <p class="mt-2 text-sm">Battery: ${battery}</p>
+            <p class="text-sm">Camera: ${camera}</p>
+            <p class="text-sm">Storage: ${storage}</p>
+            <p class="mt-2 font-bold text-emerald-400">₹${p.price}</p>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button class="flex-1 bg-sky-500 hover:bg-sky-600 text-black text-xs py-1 rounded-lg">Add to Compare</button>
+            <button class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-black text-xs py-1 rounded-lg">Buy</button>
+          </div>`;
+        card.querySelectorAll("button")[0].onclick = () => addToCompareId(p.id);
+        card.querySelectorAll("button")[1].onclick = () => buy(p.id, p.price);
+        grid.appendChild(card);
+      });
+    }
+
+    function addToCompareId(id) {
+      const numericId = Number(id);
+      if (compareList.length >= 3) {
+        alert('You can compare up to 3 phones only.');
+        return;
+      }
+      if (!compareList.includes(numericId)) compareList.push(numericId);
+      renderCompare();
+      showSection('compare');
+    }
+
+    function removeFromCompare(id) {
+      const numericId = Number(id);
+      const idx = compareList.indexOf(numericId);
+      if (idx >= 0) compareList.splice(idx, 1);
+      renderCompare();
+    }
+
+    async function renderCompare() {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      const tbody = document.getElementById('compare-body');
+      tbody.innerHTML = '';
+      data.filter(p => compareList.includes(p.id)).forEach(p => {
+        const battery = p.battery != null ? p.battery + ' mAh' : '-';
+        const camera = p.camera || '-';
+        const storage = p.storage != null ? p.storage + ' GB' : '-';
+        const tr = document.createElement('tr');
+        tr.className = 'border-t border-slate-700';
+        tr.innerHTML = `
+          <td class="px-3 py-2">${p.name}</td>
+          <td class="px-3 py-2">${p.brand}</td>
+          <td class="px-3 py-2">₹${p.price}</td>
+          <td class="px-3 py-2">${battery}</td>
+          <td class="px-3 py-2">${camera}</td>
+          <td class="px-3 py-2">${storage}</td>
+          <td class="px-3 py-2"><button class="text-red-400 hover:underline text-xs" onclick="removeFromCompare(${p.id})">Remove</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function getRecommendation() {
+      const budget = document.getElementById('r-budget').value;
+      const brand = document.getElementById('r-brand').value;
+      const battery = document.getElementById('r-battery').value;
+      const storage = document.getElementById('r-storage').value;
+      const camera = document.getElementById('r-camera').value;
+      const params = new URLSearchParams();
+      if (budget) params.append('budget', budget);
+      if (brand) params.append('brand', brand);
+      if (battery) params.append('battery', battery);
+      if (storage) params.append('storage', storage);
+      if (camera) params.append('camera', camera);
+      const res = await fetch('/api/recommend?' + params.toString());
+      const div = document.getElementById('rec-result');
+      if (!res.ok) {
+        div.innerHTML = '<p class="text-red-400 text-sm">Error while getting recommendation.</p>';
+        return;
+      }
+      const p = await res.json();
+      if (!p || !p.id) {
+        div.innerHTML = '<p class="text-red-400 text-sm">No matching phone found.</p>';
+      } else {
+        const batteryText = p.battery != null ? p.battery + ' mAh' : '-';
+        const cameraText = p.camera || '-';
+        const storageText = p.storage != null ? p.storage + ' GB' : '-';
+        div.innerHTML = `<div class="mt-2 bg-slate-800 rounded-xl p-4">
+          <h3 class="font-semibold mb-1">Recommended: ${p.name}</h3>
+          <p class="text-xs text-slate-300">${p.brand} • ${p.category}</p>
+          <p class="mt-1 text-sm">Battery: ${batteryText} | Camera: ${cameraText} | Storage: ${storageText}</p>
+          <p class="mt-1 font-bold text-emerald-400">₹${p.price}</p>
+        </div>`;
+      }
+    }
+
+    async function buy(productId, price) {
+      const qtyStr = prompt('Enter quantity:');
+      if (!qtyStr) return;
+      const qty = parseInt(qtyStr);
+      if (!qty || qty <= 0) return;
+      const total = qty * price;
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId: userId, productId, quantity: qty, total })
+      });
+      const data = await res.json();
+      if (data.status === 'OK') {
+        alert('Order placed!');
+        loadOrders();
+      } else {
+        alert('Failed: ' + (data.message || 'Error placing order'));
+      }
+    }
+
+    async function loadOrders() {
+      const res = await fetch('/api/orders/customer/' + userId);
+      const data = await res.json();
+      const tbody = document.getElementById('orders-body');
+      tbody.innerHTML = '';
+      data.forEach(o => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-t border-slate-700';
+        tr.innerHTML = `
+          <td class="px-3 py-2">${o.id}</td>
+          <td class="px-3 py-2">${o.productId}</td>
+          <td class="px-3 py-2">${o.quantity}</td>
+          <td class="px-3 py-2">₹${o.total}</td>
+          <td class="px-3 py-2">${o.date}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login - SmartStore 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .bg-grid {
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(148,163,184,0.2) 1px, transparent 0);
+      background-size: 28px 28px;
+    }
+    .glass {
+      background: rgba(15,23,42,0.92);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(148,163,184,0.45);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-50">
+  <div class="min-h-screen bg-grid relative overflow-hidden">
+    <div class="pointer-events-none absolute -top-24 left-10 h-72 w-72 rounded-full bg-sky-500/25 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-amber-500/20 blur-3xl"></div>
+
+    <div class="relative z-10 flex min-h-screen items-center justify-center px-4">
+      <div class="grid w-full max-w-5xl grid-cols-1 lg:grid-cols-[1.1fr,0.9fr] gap-6">
+        <!-- Left info panel -->
+        <div class="hidden lg:flex flex-col justify-between rounded-3xl glass p-8">
+          <div>
+            <div class="inline-flex items-center gap-2 rounded-full bg-slate-800/80 px-3 py-1 text-xs text-sky-300 mb-5">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Admin Control Center
+            </div>
+            <h1 class="text-3xl font-extrabold tracking-tight mb-3">
+              Welcome back, <span class="text-sky-400">Admin</span>.
+            </h1>
+            <p class="text-slate-300 text-sm leading-relaxed">
+              Manage inventory, staff operations, and sales analytics from a single
+              powerful dashboard. Use your admin credentials to securely sign in.
+            </p>
+          </div>
+          <div class="mt-6 grid grid-cols-2 gap-3 text-xs">
+            <div class="rounded-2xl bg-slate-900/70 border border-slate-700/80 p-4">
+              <div class="text-slate-400 mb-1">Live Inventory</div>
+              <div class="text-xl font-semibold text-slate-100">Real-time</div>
+              <p class="mt-1 text-slate-500">Keep product stock always up to date.</p>
+            </div>
+            <div class="rounded-2xl bg-slate-900/70 border border-slate-700/80 p-4">
+              <div class="text-slate-400 mb-1">Sales Insights</div>
+              <div class="text-xl font-semibold text-slate-100">Visual</div>
+              <p class="mt-1 text-slate-500">Track growth with smart charts.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right login card -->
+        <div class="glass rounded-3xl p-7 lg:p-8 shadow-2xl">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-400 mb-1">
+                SmartStore 360
+              </p>
+              <h2 class="text-xl font-semibold">Admin Login</h2>
+            </div>
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500/20 text-sky-400">
+              🛠
+            </span>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label for="username" class="block text-xs font-medium text-slate-300 mb-1.5">
+                Username
+              </label>
+              <input
+                id="username"
+                placeholder="Enter admin username"
+                class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+              >
+            </div>
+
+            <div>
+              <label for="password" class="block text-xs font-medium text-slate-300 mb-1.5">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+                class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+              >
+            </div>
+
+            <p id="msg" class="text-xs text-rose-400 h-4"></p>
+
+            <button
+              onclick="login()"
+              class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-sky-500 to-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-sky-500/30 hover:shadow-emerald-400/40 hover:translate-y-[1px] transition"
+            >
+              Sign in as Admin
+            </button>
+
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-3">
+              <button
+                onclick="location.href='index.html'"
+                class="inline-flex items-center gap-1 text-slate-400 hover:text-slate-200 hover:underline"
+              >
+                ← Back to role selection
+              </button>
+              <span class="text-slate-500">
+                Staff / Customer? <a href="index.html" class="text-sky-400 hover:underline">Go back</a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS logic preserved exactly -->
+  <script>
+    async function login() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      const data = await res.json();
+      if (data.status === 'OK') {
+        sessionStorage.setItem('role', data.role);
+        sessionStorage.setItem('userId', data.userId);
+        if ('ADMIN' === 'ADMIN' && data.role === 'ADMIN') window.location.href = 'dashboard_admin.html';
+        else if ('ADMIN' === 'STAFF' && data.role === 'STAFF') window.location.href = 'dashboard_staff.html';
+        else if ('ADMIN' === 'CUSTOMER' && data.role === 'CUSTOMER') window.location.href = 'dashboard_customer.html';
+        else document.getElementById('msg').innerText = 'You are not allowed to login as ADMIN';
+      } else {
+        document.getElementById('msg').innerText = 'Invalid credentials';
+      }
+    }
+  </script>
+</body>
+</html>

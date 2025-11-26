@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Staff Dashboard - SmartStore 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+    .bg-grid {
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(148,163,184,0.18) 1px, transparent 0);
+      background-size: 30px 30px;
+    }
+    .glass {
+      background: rgba(15,23,42,0.9);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(148,163,184,0.35);
+    }
+  </style>
+
+</head>
+<body class="min-h-screen bg-slate-900 text-white">
+    <body class="min-h-screen bg-slate-950 text-slate-50">
+  <div class="min-h-screen bg-grid relative overflow-hidden">
+    <div class="pointer-events-none absolute -top-32 -left-24 h-80 w-80 rounded-full bg-sky-500/20 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-[-120px] right-[-80px] h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl"></div>
+
+    <div class="relative z-10 flex min-h-screen">
+      <aside class="hidden md:flex md:w-64 flex-col glass border-r border-slate-800/80 p-5">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300 text-xl">
+            📦
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500">SmartStore</p>
+            <h2 class="text-sm font-semibold">Staff Panel</h2>
+          </div>
+        </div>
+
+        <nav class="space-y-1 text-sm">
+          <button
+            class="w-full text-left px-3 py-2 rounded-xl bg-slate-900/80 text-emerald-300 font-medium hover:bg-slate-800 flex items-center gap-2"
+            onclick="showSection('inventory')"
+          >
+            <span>📊</span>
+            <span>Inventory</span>
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 flex items-center gap-2"
+            onclick="showSection('orders')"
+          >
+            <span>🧾</span>
+            <span>Customer Orders</span>
+          </button>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-slate-800/70">
+          <button
+            class="w-full text-left text-sm text-rose-400 hover:text-rose-300 flex items-center gap-2"
+            onclick="logout()"
+          >
+            <span>⏏</span>
+            <span>Logout</span>
+          </button>
+          <p class="mt-3 text-[11px] text-slate-500">
+            Logged in as <span class="text-emerald-300 font-medium">STAFF</span>
+          </p>
+        </div>
+      </aside>
+
+      <!-- Main area -->
+      <main class="flex-1 flex flex-col">
+        <header class="glass border-b border-slate-800/80 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+          <div>
+            <h1 class="text-lg sm:text-xl font-semibold flex items-center gap-2">
+              Staff Workspace
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            </h1>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Manage live inventory and keep track of customer orders.
+            </p>
+          </div>
+          <div class="hidden sm:flex items-center gap-2 text-[11px] text-slate-400">
+            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/25 text-emerald-100">
+              ST
+            </span>
+            <span>SmartStore Staff</span>
+          </div>
+        </header>
+
+        <!-- keep the rest of your existing sections (section-inventory, section-orders, tables, etc.) exactly as they are -->
+
+      <section id="section-inventory">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">Inventory</h2>
+          <div class="bg-slate-800 rounded-xl p-3 text-xs">
+            <p class="mb-1 text-slate-300">Stock Overview</p>
+            <canvas id="stockChartStaff" class="w-full h-32"></canvas>
+          </div>
+        </div>
+        <table class="min-w-full bg-slate-800 rounded-lg overflow-hidden text-sm">
+          <thead class="bg-slate-700">
+          <tr>
+            <th class="px-3 py-2 text-left">ID</th>
+            <th class="px-3 py-2 text-left">Name</th>
+            <th class="px-3 py-2 text-left">Stock</th>
+            <th class="px-3 py-2 text-left">Update</th>
+          </tr>
+          </thead>
+          <tbody id="inv-body"></tbody>
+        </table>
+      </section>
+
+      <section id="section-orders" class="hidden">
+        <h2 class="text-xl font-semibold mb-4">Customer Orders</h2>
+        <table class="min-w-full bg-slate-800 rounded-lg overflow-hidden text-sm">
+          <thead class="bg-slate-700">
+          <tr>
+            <th class="px-3 py-2">Order ID</th>
+            <th class="px-3 py-2">Customer ID</th>
+            <th class="px-3 py-2">Product ID</th>
+            <th class="px-3 py-2">Qty</th>
+            <th class="px-3 py-2">Total</th>
+            <th class="px-3 py-2">Date</th>
+          </tr>
+          </thead>
+          <tbody id="orders-body"></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    if (sessionStorage.getItem('role') !== 'STAFF') window.location.href = 'index.html';
+    let stockChart;
+
+    function showSection(id) {
+      document.getElementById('section-inventory').classList.add('hidden');
+      document.getElementById('section-orders').classList.add('hidden');
+      if (id === 'inventory') document.getElementById('section-inventory').classList.remove('hidden');
+      if (id === 'orders') { document.getElementById('section-orders').classList.remove('hidden'); loadOrders(); }
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      window.location.href = 'index.html';
+    }
+
+    async function loadInventory() {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      const tbody = document.getElementById('inv-body');
+      tbody.innerHTML = '';
+      const labels = [];
+      const stocks = [];
+      data.forEach(p => {
+        labels.push(p.name);
+        stocks.push(p.stock);
+        const tr = document.createElement('tr');
+        tr.className = 'border-t border-slate-700';
+        tr.innerHTML = `
+          <td class="px-3 py-2">${p.id}</td>
+          <td class="px-3 py-2">${p.name}</td>
+          <td class="px-3 py-2"><input id="stock-${p.id}" type="number" value="${p.stock}" class="w-20 bg-slate-700 rounded px-2 py-1 border border-slate-600"></td>
+          <td class="px-3 py-2"><button onclick="updateStock(${p.id})" class="text-emerald-400 hover:underline text-xs">Save</button></td>`;
+        tbody.appendChild(tr);
+      });
+      const ctx = document.getElementById('stockChartStaff').getContext('2d');
+      if (stockChart) stockChart.destroy();
+      stockChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ label: 'Stock', data: stocks }]
+        }
+      });
+    }
+
+    async function updateStock(id) {
+      const val = parseInt(document.getElementById('stock-' + id).value);
+      await fetch('/api/products/' + id + '/stock', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(val)
+      });
+      alert('Stock updated');
+      loadInventory();
+    }
+
+    async function loadOrders() {
+      const res = await fetch('/api/orders');
+      const data = await res.json();
+      const tbody = document.getElementById('orders-body');
+      tbody.innerHTML = '';
+      data.forEach(o => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-t border-slate-700';
+        tr.innerHTML = `
+          <td class="px-3 py-2">${o.id}</td>
+          <td class="px-3 py-2">${o.customerId}</td>
+          <td class="px-3 py-2">${o.productId}</td>
+          <td class="px-3 py-2">${o.quantity}</td>
+          <td class="px-3 py-2">₹${o.total}</td>
+          <td class="px-3 py-2">${o.date}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    loadInventory();
+  </script>
+</body>
+</html>

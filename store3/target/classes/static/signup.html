@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customer Signup - SmartStore 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .bg-grid {
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(148,163,184,0.2) 1px, transparent 0);
+      background-size: 28px 28px;
+    }
+    .glass {
+      background: rgba(15,23,42,0.96);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(148,163,184,0.45);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-50">
+  <div class="min-h-screen bg-grid relative overflow-hidden">
+    <div class="pointer-events-none absolute -top-24 left-0 h-72 w-72 rounded-full bg-sky-500/25 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl"></div>
+
+    <div class="relative z-10 flex min-h-screen items-center justify-center px-4">
+      <div class="w-full max-w-xl glass rounded-3xl p-7 sm:p-8 shadow-2xl">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-400 mb-1">
+              SmartStore 360
+            </p>
+            <h2 class="text-xl sm:text-2xl font-semibold">Create Customer Account</h2>
+          </div>
+          <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500/20 text-sky-300">
+            ✨
+          </span>
+        </div>
+
+        <p class="text-xs text-slate-400 mb-5">
+          Sign up once to access smartphone recommendations, comparison tools,
+          and a unified view of your orders.
+        </p>
+
+        <div class="space-y-4 text-sm">
+          <div>
+            <label for="username" class="block text-xs font-medium text-slate-300 mb-1.5">
+              Choose a username
+            </label>
+            <input
+              id="username"
+              placeholder="e.g., pranay_01"
+              class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+            >
+          </div>
+
+          <div>
+            <label for="password" class="block text-xs font-medium text-slate-300 mb-1.5">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Create a secure password"
+              class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+            >
+          </div>
+
+          <p id="msg" class="text-xs h-4"></p>
+
+          <button
+            onclick="signup()"
+            class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-sky-500 to-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-sky-500/30 hover:shadow-emerald-400/40 hover:translate-y-[1px] transition"
+          >
+            Create Account
+          </button>
+
+          <div class="flex items-center justify-between text-xs text-slate-400 pt-3">
+            <button
+              onclick="location.href='index.html'"
+              class="inline-flex items-center gap-1 text-slate-400 hover:text-slate-200 hover:underline"
+            >
+              ← Back to role selection
+            </button>
+            <button
+              onclick="location.href='login_customer.html'"
+              class="text-emerald-300 hover:text-emerald-200 hover:underline"
+            >
+              Already have an account? Login
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function signup() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      const data = await res.json();
+      if (data.status === 'OK') {
+        document.getElementById('msg').innerText = 'Signup successful! You can login now.';
+        document.getElementById('msg').className = 'text-emerald-400 text-xs';
+      } else if (data.status === 'USERNAME_EXISTS') {
+        document.getElementById('msg').innerText = 'Username already exists';
+        document.getElementById('msg').className = 'text-red-400 text-xs';
+      } else {
+        document.getElementById('msg').innerText = 'Error during signup';
+        document.getElementById('msg').className = 'text-red-400 text-xs';
+      }
+    }
+  </script>
+</body>
+</html>

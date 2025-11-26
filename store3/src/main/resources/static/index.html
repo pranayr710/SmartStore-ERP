@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SmartStore 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .bg-grid {
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(148,163,184,0.25) 1px, transparent 0);
+      background-size: 32px 32px;
+    }
+    .shine-border {
+      position: relative;
+    }
+    .shine-border::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: 1.5rem;
+      background: linear-gradient(120deg, rgba(56,189,248,0.7), rgba(248,250,252,0.1), rgba(249,115,22,0.7));
+      opacity: 0.9;
+      z-index: -1;
+      filter: blur(2px);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-50">
+  <div class="min-h-screen bg-grid bg-slate-950/90 relative overflow-hidden">
+    <!-- Glow blobs -->
+    <div class="pointer-events-none absolute -top-32 -left-32 h-72 w-72 rounded-full bg-sky-500/30 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-amber-500/20 blur-3xl"></div>
+
+    <div class="relative z-10 flex min-h-screen items-center justify-center px-4">
+      <div class="shine-border rounded-3xl bg-slate-900/70 backdrop-blur-xl shadow-2xl border border-slate-700/50 w-full max-w-4xl">
+        <div class="flex flex-col lg:flex-row">
+          <!-- Left section -->
+          <div class="w-full lg:w-1/2 p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-slate-800/60">
+            <div class="inline-flex items-center gap-2 rounded-full bg-slate-800/70 px-3 py-1 text-xs font-medium text-sky-300 mb-4">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Real-time Store Management
+            </div>
+            <h1 class="text-3xl lg:text-4xl font-extrabold tracking-tight mb-4">
+              SmartStore <span class="text-sky-400">360</span>
+            </h1>
+            <p class="text-slate-300 text-sm lg:text-base mb-6 leading-relaxed">
+              Manage products, staff, and customer orders in a unified, modern dashboard.
+              Select your role to continue to your personalized workspace.
+            </p>
+
+            <dl class="grid grid-cols-2 gap-3 text-xs lg:text-sm text-slate-300">
+              <div class="rounded-xl bg-slate-800/60 border border-slate-700/70 px-3 py-3">
+                <dt class="font-semibold text-slate-100 mb-1">Admins</dt>
+                <dd class="text-slate-400">Full control over inventory, staff, and reports.</dd>
+              </div>
+              <div class="rounded-xl bg-slate-800/60 border border-slate-700/70 px-3 py-3">
+                <dt class="font-semibold text-slate-100 mb-1">Staff</dt>
+                <dd class="text-slate-400">Handle inventory and customer orders efficiently.</dd>
+              </div>
+              <div class="rounded-xl bg-slate-800/60 border border-slate-700/70 px-3 py-3">
+                <dt class="font-semibold text-slate-100 mb-1">Customers</dt>
+                <dd class="text-slate-400">Browse phones, compare specs, and track orders.</dd>
+              </div>
+              <div class="rounded-xl bg-slate-800/60 border border-slate-700/70 px-3 py-3">
+                <dt class="font-semibold text-slate-100 mb-1">Analytics</dt>
+                <dd class="text-slate-400">Visual insights into sales and stock levels.</dd>
+              </div>
+            </dl>
+          </div>
+
+          <!-- Right section: Role cards -->
+          <div class="w-full lg:w-1/2 p-6 lg:p-8 space-y-4">
+            <p class="text-xs uppercase tracking-[0.18em] text-slate-400 mb-2">Choose your role</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <button
+                onclick="location.href='login_admin.html'"
+                class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-black font-semibold py-4 px-3 text-sm shadow-lg shadow-amber-500/25 transition transform hover:-translate-y-1 hover:shadow-2xl"
+              >
+                <div class="flex flex-col items-start gap-1">
+                  <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-black/10 text-lg">
+                    🛠
+                  </span>
+                  <span>Admin</span>
+                  <span class="text-xs font-normal text-amber-950/80">
+                    Full access to the entire system
+                  </span>
+                </div>
+              </button>
+
+              <button
+                onclick="location.href='login_staff.html'"
+                class="group relative overflow-hidden rounded-2xl bg-slate-900/80 border border-slate-700/80 text-slate-100 font-semibold py-4 px-3 text-sm shadow-lg hover:border-sky-500/60 hover:shadow-sky-600/30 transition transform hover:-translate-y-1"
+              >
+                <div class="flex flex-col items-start gap-1">
+                  <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-sky-500/15 text-lg text-sky-300">
+                    📦
+                  </span>
+                  <span>Staff</span>
+                  <span class="text-xs font-normal text-slate-400">
+                    Manage stock and customer orders
+                  </span>
+                </div>
+              </button>
+
+              <button
+                onclick="location.href='login_customer.html'"
+                class="group relative overflow-hidden rounded-2xl bg-slate-900/80 border border-slate-700/80 text-slate-100 font-semibold py-4 px-3 text-sm shadow-lg hover:border-emerald-500/60 hover:shadow-emerald-500/30 transition transform hover:-translate-y-1"
+              >
+                <div class="flex flex-col items-start gap-1">
+                  <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 text-lg text-emerald-300">
+                    📱
+                  </span>
+                  <span>Customer</span>
+                  <span class="text-xs font-normal text-slate-400">
+                    Explore phones and see your orders
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between text-xs text-slate-500">
+              <span>© SmartStore 360</span>
+              <button
+                onclick="location.href='signup.html'"
+                class="text-sky-400 hover:text-sky-300 hover:underline"
+              >
+                New here? Create a customer account →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

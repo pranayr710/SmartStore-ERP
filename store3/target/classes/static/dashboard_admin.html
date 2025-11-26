@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - SmartStore 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .bg-grid {
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(148,163,184,0.18) 1px, transparent 0);
+      background-size: 30px 30px;
+    }
+    .glass {
+      background: rgba(15,23,42,0.9);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(148,163,184,0.35);
+    }
+    .card-soft {
+      background: rgba(15,23,42,0.95);
+      border: 1px solid rgba(51,65,85,0.9);
+    }
+    .alert-critical { background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.4); color: #fca5a5; }
+    .alert-warning { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #fcd34d; }
+    .alert-info { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.4); color: #93c5fd; }
+    .alert-success { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); color: #86efac; }
+  </style>
+
+  <script>
+    function formatNumber(num) {
+      return parseFloat(num || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/reports/summary');
+        const data = await res.json();
+
+        document.getElementById("stat-today-sales").innerText = "₹" + formatNumber(data.todaySales || 0);
+        document.getElementById("stat-total-orders").innerText = data.totalOrders || 0;
+        document.getElementById("stat-today-orders").innerText = data.todayOrders || 0;
+        document.getElementById("stat-best-seller").innerText = data.bestSeller || "–";
+        document.getElementById("stat-avg-order").innerText = "₹" + formatNumber(data.avgOrderValue || 0);
+        document.getElementById("stat-turnover").innerText = "₹" + formatNumber(data.turnover || 0);
+        document.getElementById("stat-critical-alerts").innerText = data.criticalAlerts || 0;
+
+        const labels = data.salesLabels || ["Mon", "Tue", "Wed", "Thu", "Fri"];
+        const values = data.salesValues || [1000, 2000, 1500, 3000, 2500];
+
+        const salesCtx = document.getElementById("salesChart").getContext("2d");
+        if (window.salesChart) window.salesChart.destroy();
+        window.salesChart = new Chart(salesCtx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "Sales (₹)",
+              data: values,
+              borderColor: "rgb(56,189,248)",
+              tension: 0.4,
+              fill: true,
+              backgroundColor: "rgba(56,189,248,0.15)",
+            }],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: "#94a3b8" } },
+              y: { ticks: { color: "#94a3b8" } },
+            },
+          },
+        });
+
+        const stockCtx = document.getElementById("stockChart").getContext("2d");
+        if (window.stockChart) window.stockChart.destroy();
+        window.stockChart = new Chart(stockCtx, {
+          type: "doughnut",
+          data: {
+            labels: ["Total Products", "Low Stock"],
+            datasets: [{
+              label: "Stock",
+              data: [data.totalProducts, data.lowStock],
+              backgroundColor: ["rgba(56,189,248,0.6)", "rgba(251,191,36,0.6)"],
+              borderWidth: 0,
+            }],
+          },
+          options: { plugins: { legend: { labels: { color: "#cbd5e1" } } } },
+        });
+      } catch (err) {
+        console.error("Error loading stats:", err);
+      }
+    }
+
+    async function loadProductWiseSales() {
+      try {
+        const res = await fetch('/api/reports/product-wise-sales');
+        const data = await res.json();
+        const tbody = document.getElementById('product-wise-body');
+        tbody.innerHTML = '';
+        (data.data || []).slice(0, 8).forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-4 py-2 text-sm text-slate-200">${p.name}</td>
+            <td class="px-4 py-2 text-sm text-slate-300">${p.category}</td>
+            <td class="px-4 py-2 text-sm text-emerald-300">₹${formatNumber(p.total_revenue)}</td>
+            <td class="px-4 py-2 text-sm text-slate-400">${p.order_count} orders</td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Error loading product-wise sales:", err);
+      }
+    }
+
+    async function loadVolumeWiseSales() {
+      try {
+        const res = await fetch('/api/reports/volume-wise-sales');
+        const data = await res.json();
+        const tbody = document.getElementById('volume-wise-body');
+        tbody.innerHTML = '';
+        (data.data || []).forEach(v => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-4 py-2 text-sm text-slate-200">${v.volume_category}</td>
+            <td class="px-4 py-2 text-sm text-amber-300">${v.order_count} orders</td>
+            <td class="px-4 py-2 text-sm text-sky-300">${v.total_quantity} units</td>
+            <td class="px-4 py-2 text-sm text-emerald-300">₹${formatNumber(v.revenue)}</td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Error loading volume-wise sales:", err);
+      }
+    }
+
+    async function loadYesterdayVsToday() {
+      try {
+        const res = await fetch('/api/reports/yesterday-vs-today');
+        const data = await res.json();
+        const tbody = document.getElementById('ydt-body');
+        tbody.innerHTML = '';
+        if (data.comparison && data.comparison.length > 0) {
+          data.comparison.forEach(d => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="px-4 py-2 text-sm text-slate-200">${d.sale_date}</td>
+              <td class="px-4 py-2 text-sm text-emerald-300">₹${formatNumber(d.daily_revenue)}</td>
+              <td class="px-4 py-2 text-sm text-sky-300">${d.order_count} orders</td>
+              <td class="px-4 py-2 text-sm text-amber-300">${d.total_quantity} units</td>`;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (err) {
+        console.error("Error loading yesterday vs today:", err);
+      }
+    }
+
+    async function loadInventoryAging() {
+      try {
+        const res = await fetch('/api/reports/inventory-aging');
+        const data = await res.json();
+        const tbody = document.getElementById('aging-body');
+        tbody.innerHTML = '';
+        (data.data || []).slice(0, 6).forEach(item => {
+          const statusColor = item.aging_status === 'FRESH' ? 'text-green-400' : 
+                              item.aging_status === 'AGING' ? 'text-yellow-400' : 'text-red-400';
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-4 py-2 text-sm text-slate-200">${item.name}</td>
+            <td class="px-4 py-2 text-sm text-slate-400">${item.stock} units</td>
+            <td class="px-4 py-2 text-sm">${item.days_in_stock} days</td>
+            <td class="px-4 py-2 text-sm"><span class="${statusColor} font-semibold">${item.aging_status}</span></td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Error loading inventory aging:", err);
+      }
+    }
+
+    async function loadProfitability() {
+      try {
+        const res = await fetch('/api/reports/profitability');
+        const data = await res.json();
+        const tbody = document.getElementById('profit-body');
+        tbody.innerHTML = '';
+        (data.data || []).slice(0, 8).forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-4 py-2 text-sm text-slate-200">${p.name}</td>
+            <td class="px-4 py-2 text-sm text-slate-400">₹${formatNumber(p.profit_per_unit)}</td>
+            <td class="px-4 py-2 text-sm text-emerald-300">${p.margin_percentage}%</td>
+            <td class="px-4 py-2 text-sm text-amber-300">₹${formatNumber(p.total_profit)}</td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Error loading profitability:", err);
+      }
+    }
+
+    async function loadReorderRequired() {
+      try {
+        const res = await fetch('/api/reports/reorder-required');
+        const data = await res.json();
+        const tbody = document.getElementById('reorder-body');
+        tbody.innerHTML = '';
+        (data.data || []).forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-4 py-2 text-sm text-slate-200">${p.name}</td>
+            <td class="px-4 py-2 text-sm"><span class="text-red-400 font-semibold">${p.stock}</span> / ${p.reorderLevel}</td>
+            <td class="px-4 py-2 text-sm text-sky-300">Min: ${p.minOrderQty} units</td>
+            <td class="px-4 py-2 text-sm"><span class="text-amber-400 text-xs bg-amber-500/20 px-2 py-1 rounded">→ PRODUCTION</span></td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Error loading reorder data:", err);
+      }
+    }
+
+    async function loadExpiringStock() {
+      try {
+        const res = await fetch('/api/reports/expiring-stock?daysThreshold=30');
+        const data = await res.json();
+        const tbody = document.getElementById('expiring-body');
+        tbody.innerHTML = '';
+        if ((data.data || []).length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-sm text-slate-400 text-center">No expiring items</td></tr>';
+        } else {
+          (data.data || []).forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="px-4 py-2 text-sm text-slate-200">${item.name}</td>
+              <td class="px-4 py-2 text-sm text-slate-400">${item.stock} units</td>
+              <td class="px-4 py-2 text-sm text-yellow-400">${item.days_until_expiry} days</td>
+              <td class="px-4 py-2 text-sm">${item.expiry_date}</td>`;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (err) {
+        console.error("Error loading expiring stock:", err);
+      }
+    }
+
+    function loadAllAnalytics() {
+      loadProductWiseSales();
+      loadVolumeWiseSales();
+      loadYesterdayVsToday();
+      loadInventoryAging();
+      loadProfitability();
+      loadReorderRequired();
+      loadExpiringStock();
+    }
+  </script>
+
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-50">
+  <div class="min-h-screen bg-grid relative overflow-hidden">
+    <div class="pointer-events-none absolute -top-32 -left-24 h-80 w-80 rounded-full bg-sky-500/20 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-[-120px] right-[-80px] h-96 w-96 rounded-full bg-amber-500/20 blur-3xl"></div>
+
+    <div class="relative z-10 flex min-h-screen">
+      <!-- Sidebar -->
+      <aside class="hidden md:flex md:w-64 flex-col glass border-r border-slate-800/80 p-5">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500/15 text-sky-400 text-xl">🧭</div>
+          <div>
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500">SmartStore</p>
+            <h2 class="text-sm font-semibold">Admin Panel</h2>
+          </div>
+        </div>
+
+        <nav class="space-y-1 text-sm">
+          <button class="w-full text-left px-3 py-2 rounded-xl bg-slate-900/80 text-sky-300 font-medium hover:bg-slate-800 flex items-center gap-2" onclick="showSection('products')">
+            <span>📦</span> <span>Products</span>
+          </button>
+          <button class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 flex items-center gap-2" onclick="showSection('reports')">
+            <span>📊</span> <span>Statistics</span>
+          </button>
+          <button class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 flex items-center gap-2" onclick="showSection('analytics')">
+            <span>📈</span> <span>Advanced Analytics</span>
+          </button>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-slate-800/70">
+          <button class="w-full text-left text-sm text-rose-400 hover:text-rose-300 flex items-center gap-2" onclick="logout()">
+            <span>⏏</span> <span>Logout</span>
+          </button>
+          <p class="mt-3 text-[11px] text-slate-500">Logged in as <span class="text-sky-300 font-medium">ADMIN</span></p>
+        </div>
+      </aside>
+
+      <!-- Main area -->
+      <main class="flex-1 flex flex-col">
+        <!-- Top bar -->
+        <header class="glass border-b border-slate-800/80 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+          <div>
+            <h1 class="text-lg sm:text-xl font-semibold flex items-center gap-2">
+              <span class="hidden md:inline">Welcome, Admin</span>
+              <span class="inline md:hidden">Admin Dashboard</span>
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            </h1>
+            <p class="text-xs text-slate-400 mt-0.5">Track products, inventory health, and store performance in real time.</p>
+          </div>
+          <div class="inline-flex items-center gap-2 rounded-full bg-slate-900/70 px-3 py-1 border border-slate-700">
+            <span class="h-7 w-7 rounded-full bg-sky-500/30 flex items-center justify-center text-xs">AD</span>
+            <span class="text-[11px] leading-tight"><span class="block text-slate-100">Admin</span><span class="block text-slate-500">SmartStore 360</span></span>
+          </div>
+        </header>
+
+        <!-- Content -->
+        <section class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6">
+          <!-- Quick stats row -->
+          <div id="quick-stats" class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <p class="text-slate-400">Total Products</p>
+              <p id="stat-total-products" class="mt-1 text-2xl font-mono text-slate-50">–</p>
+              <p class="mt-1 text-[11px] text-slate-500">Updated from live inventory.</p>
+            </div>
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <p class="text-slate-400">Low Stock Items</p>
+              <p id="stat-low-stock" class="mt-1 text-2xl font-mono text-amber-300">–</p>
+              <p class="mt-1 text-[11px] text-slate-500">Keep an eye on these to avoid outages.</p>
+            </div>
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <p class="text-slate-400">Today's Orders</p>
+              <p id="stat-today-orders" class="mt-1 text-2xl font-mono text-emerald-300">–</p>
+              <p class="mt-1 text-[11px] text-slate-500">Count of customer orders placed today.</p>
+            </div>
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <p class="text-slate-400">Critical Alerts</p>
+              <p id="stat-critical-alerts" class="mt-1 text-2xl font-mono text-red-400">–</p>
+              <p class="mt-1 text-[11px] text-slate-500">Urgent reorder notifications.</p>
+            </div>
+          </div>
+
+          <!-- Products section -->
+          <section id="section-products" class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold">Products</h2>
+                <p class="text-xs text-slate-400">Manage phone catalog, stock levels, and export reports.</p>
+              </div>
+              <div class="flex flex-wrap gap-2 text-xs">
+                <button onclick="location.href='/api/export/products/excel'" class="inline-flex items-center gap-1 rounded-xl bg-emerald-400 text-slate-950 px-3 py-1.5 font-semibold shadow hover:bg-emerald-300 transition">⬇ Excel</button>
+                <button onclick="location.href='/api/export/products/pdf'" class="inline-flex items-center gap-1 rounded-xl bg-sky-400 text-slate-950 px-3 py-1.5 font-semibold shadow hover:bg-sky-300 transition">⬇ PDF</button>
+                <button onclick="openAddModal()" class="inline-flex items-center gap-1 rounded-xl bg-amber-400 text-slate-950 px-4 py-1.5 font-semibold shadow hover:bg-amber-300 transition">＋ Add Product</button>
+              </div>
+            </div>
+
+            <div class="card-soft rounded-2xl shadow-xl overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                  <thead class="bg-slate-800/80 text-xs uppercase tracking-wider text-slate-400">
+                    <tr>
+                      <th class="px-4 py-3 text-left">ID</th>
+                      <th class="px-4 py-3 text-left">Name</th>
+                      <th class="px-4 py-3 text-left">Brand</th>
+                      <th class="px-4 py-3 text-left">Price</th>
+                      <th class="px-4 py-3 text-left">Stock</th>
+                      <th class="px-4 py-3 text-left">Reorder Level</th>
+                      <th class="px-4 py-3 text-left">Shelf Life</th>
+                      <th class="px-4 py-3 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="products-body" class="divide-y divide-slate-800/80">
+                    <!-- Filled by JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- Reports section -->
+          <section id="section-reports" class="hidden space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-semibold">Store Statistics</h2>
+                <p class="text-xs text-slate-400">Visualize sales and stock distribution across your catalog.</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-[1.1fr,0.9fr] gap-4">
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div class="card-soft rounded-2xl p-4 shadow-lg text-sm">
+                  <p class="text-slate-400">Today's Sales</p>
+                  <p id="stat-today-sales" class="mt-1 text-2xl font-mono text-emerald-300">₹0</p>
+                  <p class="mt-1 text-[11px] text-slate-500">Revenue generated from all orders today.</p>
+                </div>
+                <div class="card-soft rounded-2xl p-4 shadow-lg text-sm">
+                  <p class="text-slate-400">Total Orders</p>
+                  <p id="stat-total-orders" class="mt-1 text-2xl font-mono text-sky-300">0</p>
+                  <p class="mt-1 text-[11px] text-slate-500">Lifetime orders processed in the system.</p>
+                </div>
+                <div class="card-soft rounded-2xl p-4 shadow-lg text-sm">
+                  <p class="text-slate-400">Best Seller</p>
+                  <p id="stat-best-seller" class="mt-1 text-base font-semibold text-slate-100">–</p>
+                  <p class="mt-1 text-[11px] text-slate-500">Top performing device by sales volume.</p>
+                </div>
+                <div class="card-soft rounded-2xl p-4 shadow-lg text-sm">
+                  <p class="text-slate-400">Average Order Value</p>
+                  <p id="stat-avg-order" class="mt-1 text-2xl font-mono text-amber-300">₹0</p>
+                  <p class="mt-1 text-[11px] text-slate-500">Calculated from all completed orders.</p>
+                </div>
+              </div>
+
+              <div class="space-y-4">
+                <div class="card-soft rounded-2xl p-4 shadow-lg">
+                  <p class="text-xs text-slate-400 mb-2">Sales Trend</p>
+                  <canvas id="salesChart" class="w-full h-40"></canvas>
+                </div>
+                <div class="card-soft rounded-2xl p-4 shadow-lg">
+                  <p class="text-xs text-slate-400 mb-2">Stock Overview</p>
+                  <canvas id="stockChart" class="w-full h-40"></canvas>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Advanced Analytics section -->
+          <section id="section-analytics" class="hidden space-y-5">
+            <h2 class="text-lg font-semibold">Advanced Analytics Dashboard</h2>
+
+            <!-- Yesterday vs Today -->
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <h3 class="text-sm font-semibold text-slate-100 mb-3">Yesterday vs Today Sales Comparison</h3>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs">
+                  <thead class="bg-slate-800/80 text-slate-400">
+                    <tr>
+                      <th class="px-4 py-2 text-left">Date</th>
+                      <th class="px-4 py-2 text-left">Revenue</th>
+                      <th class="px-4 py-2 text-left">Orders</th>
+                      <th class="px-4 py-2 text-left">Units Sold</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ydt-body" class="divide-y divide-slate-800/80"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Product-wise Sales -->
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <h3 class="text-sm font-semibold text-slate-100 mb-3">Product-wise Sales Report</h3>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs">
+                  <thead class="bg-slate-800/80 text-slate-400">
+                    <tr>
+                      <th class="px-4 py-2 text-left">Product Name</th>
+                      <th class="px-4 py-2 text-left">Category</th>
+                      <th class="px-4 py-2 text-left">Revenue</th>
+                      <th class="px-4 py-2 text-left">Orders</th>
+                    </tr>
+                  </thead>
+                  <tbody id="product-wise-body" class="divide-y divide-slate-800/80"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Volume-wise Sales -->
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <h3 class="text-sm font-semibold text-slate-100 mb-3">Volume-wise Sales Breakdown</h3>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs">
+                  <thead class="bg-slate-800/80 text-slate-400">
+                    <tr>
+                      <th class="px-4 py-2 text-left">Order Volume</th>
+                      <th class="px-4 py-2 text-left">Order Count</th>
+                      <th class="px-4 py-2 text-left">Total Units</th>
+                      <th class="px-4 py-2 text-left">Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody id="volume-wise-body" class="divide-y divide-slate-800/80"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Inventory Aging -->
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <h3 class="text-sm font-semibold text-slate-100 mb-3">Inventory Aging Report</h3>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs">
+                  <thead class="bg-slate-800/80 text-slate-400">
+                    <tr>
+                      <th class="px-4 py-2 text-left">Product Name</th>
+                      <th class="px-4 py-2 text-left">Stock</th>
+                      <th class="px-4 py-2 text-left">Days in Stock</th>
+                      <th class="px-4 py-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="aging-body" class="divide-y divide-slate-800/80"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Profitability Report -->
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <h3 class="text-sm font-semibold text-slate-100 mb-3">Profitability & Margin Tracking</h3>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs">
+                  <thead class="bg-slate-800/80 text-slate-400">
+                    <tr>
+                      <th class="px-4 py-2 text-left">Product Name</th>
+                      <th class="px-4 py-2 text-left">Profit/Unit</th>
+                      <th class="px-4 py-2 text-left">Margin %</th>
+                      <th class="px-4 py-2 text-left">Total Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody id="profit-body" class="divide-y divide-slate-800/80"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Reorder Required -->
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <h3 class="text-sm font-semibold text-slate-100 mb-3 flex items-center gap-2">
+                <span class="text-amber-400">⚠</span> Reorder Required - Send to Production
+              </h3>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs">
+                  <thead class="bg-slate-800/80 text-slate-400">
+                    <tr>
+                      <th class="px-4 py-2 text-left">Product Name</th>
+                      <th class="px-4 py-2 text-left">Current Stock</th>
+                      <th class="px-4 py-2 text-left">Min Order Qty</th>
+                      <th class="px-4 py-2 text-left">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reorder-body" class="divide-y divide-slate-800/80"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Expiring Stock -->
+            <div class="card-soft rounded-2xl p-4 shadow-lg">
+              <h3 class="text-sm font-semibold text-slate-100 mb-3 flex items-center gap-2">
+                <span class="text-red-400">⏰</span> Expiring Stock (Shelf Life Tracking)
+              </h3>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs">
+                  <thead class="bg-slate-800/80 text-slate-400">
+                    <tr>
+                      <th class="px-4 py-2 text-left">Product Name</th>
+                      <th class="px-4 py-2 text-left">Stock</th>
+                      <th class="px-4 py-2 text-left">Days to Expiry</th>
+                      <th class="px-4 py-2 text-left">Expiry Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="expiring-body" class="divide-y divide-slate-800/80"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="add-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center hidden z-20">
+      <div class="glass rounded-3xl p-6 w-full max-w-lg shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Add Product</h3>
+          <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-100 text-sm">✕</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Name</label>
+            <input id="p-name" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Brand</label>
+            <input id="p-brand" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Category</label>
+            <input id="p-category" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Price (₹)</label>
+            <input id="p-price" type="number" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Cost Price (₹)</label>
+            <input id="p-cost" type="number" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Stock</label>
+            <input id="p-stock" type="number" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Reorder Level</label>
+            <input id="p-reorder" type="number" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Min Order Qty</label>
+            <input id="p-min-order" type="number" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Shelf Life (days)</label>
+            <input id="p-shelf" type="number" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Battery (mAh)</label>
+            <input id="p-battery" type="number" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Camera (MP)</label>
+            <input id="p-camera" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Storage (GB)</label>
+            <input id="p-storage" type="number" class="w-full rounded-lg bg-slate-900/80 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+          </div>
+        </div>
+        <div class="mt-5 flex justify-end gap-2 text-sm">
+          <button onclick="closeAddModal()" class="rounded-lg border border-slate-600 px-4 py-2 text-slate-200 hover:bg-slate-800">Cancel</button>
+          <button onclick="saveProduct()" class="rounded-lg bg-emerald-400 text-slate-950 px-4 py-2 font-semibold hover:bg-emerald-300">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (sessionStorage.getItem('role') !== 'ADMIN') window.location.href = 'index.html';
+    let salesChart, stockChart;
+
+    function showSection(id) {
+      document.getElementById('section-products').classList.add('hidden');
+      document.getElementById('section-reports').classList.add('hidden');
+      document.getElementById('section-analytics').classList.add('hidden');
+      if (id === 'products') {
+        document.getElementById('section-products').classList.remove('hidden');
+        loadProducts();
+      }
+      if (id === 'reports') {
+        document.getElementById('section-reports').classList.remove('hidden');
+        loadStats();
+      }
+      if (id === 'analytics') {
+        document.getElementById('section-analytics').classList.remove('hidden');
+        loadAllAnalytics();
+      }
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      window.location.href = 'index.html';
+    }
+
+    function openAddModal() {
+      document.getElementById('add-modal').classList.remove('hidden');
+    }
+    function closeAddModal() {
+      document.getElementById('add-modal').classList.add('hidden');
+    }
+
+    async function loadProducts() {
+      const res = await fetch('/api/products');
+      const products = await res.json();
+      const tbody = document.getElementById('products-body');
+      tbody.innerHTML = '';
+      products.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/70 transition';
+        const stockStatus = p.stock <= (p.reorderLevel || 5) ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-sky-500/15 text-sky-300 border border-sky-500/40';
+        tr.innerHTML = `
+          <td class="px-4 py-3 text-sm text-slate-200">${p.id}</td>
+          <td class="px-4 py-3 text-sm text-slate-100">${p.name}</td>
+          <td class="px-4 py-3 text-sm text-slate-300">${p.brand}</td>
+          <td class="px-4 py-3 text-sm text-emerald-300 font-mono">₹${p.price}</td>
+          <td class="px-4 py-3 text-sm"><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${stockStatus}">${p.stock} units</span></td>
+          <td class="px-4 py-3 text-sm text-amber-300">${p.reorderLevel || 5}</td>
+          <td class="px-4 py-3 text-sm text-slate-400">${p.shelfLifeDays || 365} days</td>
+          <td class="px-4 py-3 text-sm"><button onclick="deleteProduct(${p.id})" class="text-xs text-rose-400 hover:text-rose-300 hover:underline">Delete</button></td>`;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('stat-total-products').innerText = products.length;
+      const low = products.filter(p => p.stock <= (p.reorderLevel || 5)).length;
+      document.getElementById('stat-low-stock').innerText = low;
+    }
+
+    async function saveProduct() {
+      const body = {
+        name: document.getElementById('p-name').value,
+        brand: document.getElementById('p-brand').value,
+        category: document.getElementById('p-category').value,
+        price: parseFloat(document.getElementById('p-price').value),
+        costPrice: parseFloat(document.getElementById('p-cost').value) || 0,
+        stock: parseInt(document.getElementById('p-stock').value),
+        reorderLevel: parseInt(document.getElementById('p-reorder').value) || 5,
+        minOrderQty: parseInt(document.getElementById('p-min-order').value) || 1,
+        shelfLifeDays: parseInt(document.getElementById('p-shelf').value) || 365,
+        battery: parseInt(document.getElementById('p-battery').value),
+        camera: document.getElementById('p-camera').value,
+        storage: parseInt(document.getElementById('p-storage').value),
+        rating: 4.0
+      };
+      await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      closeAddModal();
+      loadProducts();
+    }
+
+    async function deleteProduct(id) {
+      await fetch('/api/products/' + id, { method: 'DELETE' });
+      loadProducts();
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>
