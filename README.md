@@ -10,12 +10,12 @@ This system is scalable and suitable for retail stores, distributors, warehouses
 
 SmartStore ERP provides a structured backend using Java Spring Boot that handles complete store and warehouse operations including stock monitoring, user management, and production tracking.  
 
-It uses JWT authentication, REST API architecture, and JPA for seamless database persistence.
+It uses a REST API architecture with role-based login, and JPA for database persistence.
 
 
 ## 🚀 Features
 
-✔ Secure JWT Authentication  
+✔ Role-Based Login (Admin / Staff / Customer)  
 ✔ Role-Based Access (Admin / User)  
 ✔ Product Inventory Management  
 ✔ Order Creation and Status Tracking  
@@ -34,7 +34,7 @@ It uses JWT authentication, REST API architecture, and JPA for seamless database
 |---------|------------|
 | Language | Java (17+) |
 | Framework | Spring Boot |
-| Security | JWT + Spring Security |
+| Authentication | Role-based login (admin, staff, customer) |
 | ORM | Hibernate + Spring Data JPA |
 | Database | MySQL |
 | Build Tool | Maven |
@@ -95,7 +95,7 @@ SmartStore-ERP/
 │   │   │   ├── model/                     # Entities and database models
 │   │   │   ├── repository/                # JPA repositories
 │   │   │   ├── service/                   # Business logic services
-│   │   │   └── config/                    # JWT + security configuration
+│   │   │   └── config/                    # configuration
 │   │   │
 │   │   └── resources/
 │   │       ├── application.properties      # DB + environment config
@@ -127,22 +127,23 @@ mvn clean install
 
 ## 🔧 Configuration
 
-Open:
+The database connection is read from environment variables, so no password is stored in the
+repository. Set them before starting the app:
 
-`src/main/resources/application.properties`
-
-Edit values:
-
+```bash
+# Windows (PowerShell)
+$env:DB_PASSWORD = "your-mysql-password"
+# macOS / Linux
+export DB_PASSWORD="your-mysql-password"
 ```
-spring.datasource.url=jdbc:mysql://localhost:3306/smartstore
-spring.datasource.username=root
-spring.datasource.password=YOUR_PASSWORD
 
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
+| Variable | Default |
+|---|---|
+| `DB_URL` | `jdbc:mysql://localhost:3306/store_db` |
+| `DB_USERNAME` | `root` |
+| `DB_PASSWORD` | none (required) |
 
-jwt.secret=SmartStoreKey
-```
+The defaults live in `store3/src/main/resources/application.properties`.
 
 
 
