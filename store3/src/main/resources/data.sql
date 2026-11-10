@@ -1,11 +1,12 @@
+-- Demo logins: admin / admin123 and staff1 / staff123. Passwords are stored as BCrypt hashes.
 -- Insert admin only if not exists
 INSERT INTO users (username, password, role, status)
-SELECT 'admin', 'admin123', 'ADMIN', 'ACTIVE'
+SELECT 'admin', '$2a$10$L4LCyaiyLGpDIea/7pXSDueAWXUfrPXlE/Jq7.nKqg6ieBrFUhL8G', 'ADMIN', 'ACTIVE'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE username='admin');
 
 -- Insert staff only if not exists
 INSERT INTO users (username, password, role, status)
-SELECT 'staff1', 'staff123', 'STAFF', 'ACTIVE'
+SELECT 'staff1', '$2a$10$sOwwgrv284ImkH9egl80Wum7oAFit4ynu4SHinyw9SzKNk6qdNxSi', 'STAFF', 'ACTIVE'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE username='staff1');
 
 -- Product 1

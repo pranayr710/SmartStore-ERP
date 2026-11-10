@@ -16,6 +16,7 @@ It uses a REST API architecture with role-based login, and JPA for database pers
 ## 🚀 Features
 
 ✔ Role-Based Login (Admin / Staff / Customer)  
+✔ Passwords Hashed with BCrypt  
 ✔ Role-Based Access (Admin / User)  
 ✔ Product Inventory Management  
 ✔ Order Creation and Status Tracking  

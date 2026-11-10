@@ -14,10 +14,15 @@ public class UserDAO {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public User findByUsernameAndPassword(String username, String password) {
-        String sql = "SELECT * FROM users WHERE username=? AND password=? AND status='ACTIVE'";
-        List<User> list = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(User.class), username, password);
+    /** Active user by name; the password is checked against its hash in AuthService, never in SQL. */
+    public User findActiveByUsername(String username) {
+        String sql = "SELECT * FROM users WHERE username=? AND status='ACTIVE'";
+        List<User> list = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(User.class), username);
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    public void updatePassword(Integer id, String passwordHash) {
+        jdbcTemplate.update("UPDATE users SET password=? WHERE id=?", passwordHash, id);
     }
 
     public User findByUsername(String username) {

@@ -23,6 +23,12 @@
   <dependencies>
 
     <!-- Spring Boot Web (includes Tomcat + logging) -->
+    <!-- BCrypt password hashing only (not the full Spring Security filter chain) -->
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-crypto</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
